@@ -2,8 +2,8 @@ library retrodb;
 
 import 'dart:io';
 import 'package:sqflite_common/sqlite_api.dart';
+export "./models.dart";
 
-/// A Calculator.
 class RetroDatabase {
   final Database db;
   RetroDatabase(this.db);
