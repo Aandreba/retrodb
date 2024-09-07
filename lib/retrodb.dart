@@ -16,10 +16,10 @@ class RetroDatabase {
 
   static Future<RetroDatabase> open(DatabaseFactory factory, File? file) async {
     if (file == null) {
-      final bytes = Uint8List.sublistView(
-          await rootBundle.load("libretrodb-sqlite/build/libretrodb.sqlite"));
+      final bytes =
+          Uint8List.sublistView(await rootBundle.load("libretrodb.sqlite"));
 
-      final dir = await getApplicationDocumentsDirectory();
+      final dir = await getApplicationSupportDirectory();
       file = File(path.join(dir.path, "libretrodb.sqlite"));
 
       var exists = false;

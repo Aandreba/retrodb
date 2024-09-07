@@ -28,6 +28,6 @@ migrate_working_dir/
 .dart_tool/
 build/
 
-*.sqlite
-*.g.dart
+# *.sqlite
+# *.g.dart
 .flutter-plugins*
