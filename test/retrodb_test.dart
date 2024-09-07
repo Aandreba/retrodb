@@ -9,13 +9,12 @@ void main() {
     final db = await RetroDatabase.open(databaseFactoryFfi,
         File("/home/aandreba/libretrodb-sqlite/build/libretrodb.sqlite"));
 
-    final search = await db
-        .query(where: "display_name LIKE \"%Mario Kart DS%\"", whereArgs: []);
+    final search =
+        await db.query(where: "rom_crc = ?", whereArgs: [3564459454]);
 
     // 0xD47555BE
     for (final res in search) {
-      print(res);
-      print(res["rom_crc"].runtimeType);
+      print(res.roms?.length);
     }
 
     // final calculator = Calculator();

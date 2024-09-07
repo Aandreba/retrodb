@@ -1,7 +1,12 @@
 library retrodb;
 
 import 'dart:io';
+import 'dart:typed_data';
+import 'package:path_provider/path_provider.dart';
 import 'package:sqflite_common/sqlite_api.dart';
+import 'models.dart';
+import 'package:flutter/services.dart' show rootBundle;
+import 'package:path/path.dart' as path;
 
 export "./models.dart";
 
@@ -9,14 +14,38 @@ class RetroDatabase {
   final Database db;
   RetroDatabase(this.db);
 
-  Future<List<Map<String, Object?>>> query({
+  static Future<RetroDatabase> open(DatabaseFactory factory, File? file) async {
+    if (file == null) {
+      final bytes = Uint8List.sublistView(
+          await rootBundle.load("libretrodb-sqlite/build/libretrodb.sqlite"));
+
+      final dir = await getApplicationDocumentsDirectory();
+      file = File(path.join(dir.path, "libretrodb.sqlite"));
+
+      var exists = false;
+      try {
+        await file.create(exclusive: true);
+      } on PathExistsException {
+        exists = true;
+      } catch (e) {
+        rethrow;
+      }
+
+      if (!exists) await factory.writeDatabaseBytes(file.path, bytes);
+    }
+
+    return RetroDatabase(await factory.openDatabase(file.path,
+        options: OpenDatabaseOptions(readOnly: true)));
+  }
+
+  Future<Iterable<Game>> query({
     bool? distinct,
     List<Column>? columns,
     String? where,
     List<Object?>? whereArgs,
-    String? groupBy,
-    String? having,
-    List<(Column, Order)>? orderBy,
+    // String? groupBy,
+    // String? having,
+    // List<(Column, Order)>? orderBy,
     int? limit,
     int? offset,
   }) async {
@@ -43,17 +72,37 @@ class RetroDatabase {
         .followedBy(["games.id"]).join(",");
     final rawJoins = joins.join(" ");
 
-    final sql = "SELECT $rawColumns FROM games $rawJoins WHERE $where;";
-    return await db.rawQuery(sql, whereArgs);
+    final rawLimit = limit != null ? " LIMIT $limit" : null;
+    final rawOffset = offset != null ? " OFFSET $offset" : null;
+
+    final sql =
+        "SELECT $rawColumns FROM games $rawJoins WHERE $where${rawLimit ?? ""}${rawOffset ?? ""}";
+
+    final cursor = await db.rawQueryCursor(sql, whereArgs);
+    final games = <int, Game>{};
+    try {
+      final includeRoms = columns.contains(Column.roms);
+
+      while (await cursor.moveNext()) {
+        final row = cursor.current;
+        final rom = includeRoms ? Rom.fromJson(row) : null;
+
+        games.update(row["id"] as int, (game) {
+          if (rom != null) game.roms?.add(rom);
+          return game;
+        },
+            ifAbsent: () =>
+                Game.fromJson(row)..roms = includeRoms ? [rom!] : null);
+      }
+    } finally {
+      await cursor.close();
+    }
+
+    return games.values;
   }
 
   Future<void> close() async {
     await db.close();
-  }
-
-  static Future<RetroDatabase> open(DatabaseFactory factory, File file) async {
-    return RetroDatabase(await factory.openDatabase(file.path,
-        options: OpenDatabaseOptions(readOnly: true)));
   }
 }
 
@@ -107,8 +156,11 @@ List<String> transformColumn(Column col, List<String> joins) {
     case Column.fullName:
       return ["games.full_name"];
     case Column.platform:
-      joins.add("LEFT JOIN platforms ON games.platform_id = platforms.id");
-      return ["platforms.name AS platform"];
+      joins.addAll([
+        "LEFT JOIN platforms ON games.platform_id = platforms.id",
+        "LEFT JOIN manufacturers ON manufacturers.id = platforms.manufacturer_id"
+      ]);
+      return ["platforms.name AS platform, manufacturers.name AS manufacturer"];
     case Column.roms:
       joins.add("INNER JOIN roms ON games.serial_id = roms.serial_id");
       return [

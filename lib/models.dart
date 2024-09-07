@@ -43,10 +43,19 @@ final class Game {
         ..fullName = json['full_name'] as String?
         ..platform = _$PlatformFromJson(json);
 
-  Uri get coverArt => getThumbnailUri("");
+  Uri get coverArt => _getThumbnailUri("Named_Boxarts");
+  Uri get snapshotr => _getThumbnailUri("Named_Snaps");
+  Uri get titleScreens => _getThumbnailUri("Named_Titles");
 
-  Uri getThumbnailUri(String type) {
-    return Uri.https("thumbnails.libretro.com", "/MAN - $platform");
+  Uri _getThumbnailUri(String type) {
+    final manufacturerPath = platform?.name == null
+        ? null
+        : (platform?.manufacturer != null
+            ? "${platform!.manufacturer} - ${platform!.name}"
+            : platform!.name);
+
+    return Uri.https(
+        "thumbnails.libretro.com", "/$manufacturerPath/$type/$fullName.png");
   }
 }
 

@@ -1,0 +1,3 @@
+[submodule "libretrodb-sqlite"]
+	path = libretrodb-sqlite
+	url = https://github.com/Aandreba/libretrodb-sqlite

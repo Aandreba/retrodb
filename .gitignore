@@ -30,3 +30,4 @@ build/
 
 *.sqlite
 *.g.dart
+.flutter-plugins*
