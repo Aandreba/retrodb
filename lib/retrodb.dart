@@ -14,10 +14,11 @@ class RetroDatabase {
   final Database db;
   RetroDatabase(this.db);
 
-  static Future<RetroDatabase> open(DatabaseFactory factory, File? file) async {
+  static Future<RetroDatabase> open(DatabaseFactory factory,
+      {File? file, AssetBundle? bundle}) async {
     if (file == null) {
-      final bytes = Uint8List.sublistView(
-          await rootBundle.load("packages/retrodb/libretrodb.sqlite"));
+      final bytes = Uint8List.sublistView(await (bundle ?? rootBundle)
+          .load("packages/retrodb/libretrodb.sqlite"));
 
       final dir = await getApplicationSupportDirectory();
       file = File(path.join(dir.path, "libretrodb.sqlite"));
