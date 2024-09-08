@@ -5,7 +5,7 @@ import 'dart:typed_data';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite_common/sqlite_api.dart';
 import 'models.dart';
-import 'package:flutter/services.dart' show rootBundle;
+import 'package:flutter/services.dart';
 import 'package:path/path.dart' as path;
 
 export "./models.dart";
@@ -16,8 +16,8 @@ class RetroDatabase {
 
   static Future<RetroDatabase> open(DatabaseFactory factory, File? file) async {
     if (file == null) {
-      final bytes =
-          Uint8List.sublistView(await rootBundle.load("libretrodb.sqlite"));
+      final bytes = Uint8List.sublistView(
+          await rootBundle.load("packages/retrodb/libretrodb.sqlite"));
 
       final dir = await getApplicationSupportDirectory();
       file = File(path.join(dir.path, "libretrodb.sqlite"));
