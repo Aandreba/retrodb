@@ -1,7 +1,6 @@
 library retrodb;
 
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite_common/sqlite_api.dart';
 import 'models.dart';
@@ -22,17 +21,7 @@ class RetroDatabase {
 
       final dir = await getApplicationSupportDirectory();
       file = File(path.join(dir.path, "libretrodb.sqlite"));
-
-      var exists = false;
-      try {
-        await file.create(exclusive: true);
-      } on PathExistsException {
-        exists = true;
-      } catch (e) {
-        rethrow;
-      }
-
-      if (!exists) await factory.writeDatabaseBytes(file.path, bytes);
+      await factory.writeDatabaseBytes(file.path, bytes);
     }
 
     return RetroDatabase(await factory.openDatabase(file.path,
