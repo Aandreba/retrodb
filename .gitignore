@@ -31,3 +31,4 @@ build/
 # *.sqlite
 # *.g.dart
 .flutter-plugins*
+node_modules/

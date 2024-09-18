@@ -14,15 +14,15 @@ export const games = sqliteTable("games", {
     genreId: integer("genre_id").references(() => genres.id),
     displayName: text("display_name"),
     fullName: text("full_name"),
-    platformId: integer("platform_id").references(() => platforms.id)
+    platformId: integer("platform_id").references(() => platforms.id),
 });
 
 export const roms = sqliteTable("roms", {
     id: integer("id").primaryKey(),
     serialId: text("serial_id"),
     name: text("name"),
-    crc: integer("crc")
-})
+    crc: integer("crc"),
+});
 
 export const developers = sqliteTable("developers", {
     id: integer("id").primaryKey(),
@@ -57,11 +57,12 @@ export const genres = sqliteTable("genres", {
 export const platforms = sqliteTable("platforms", {
     id: integer("id").primaryKey(),
     name: text("name"),
-    manufacturerId: integer("manufacturer_id").references(() => manufacturers.id),
+    manufacturerId: integer("manufacturer_id").references(
+        () => manufacturers.id
+    ),
 });
 
 export const manufacturers = sqliteTable("manufacturers", {
     id: integer("id").primaryKey(),
     name: text("name"),
 });
-
