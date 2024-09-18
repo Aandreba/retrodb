@@ -1,9 +1,11 @@
 set windows-powershell := true
 
-build: submodules
+build-db: submodules
     cd libretrodb-sqlite; make all
     cp libretrodb-sqlite/build/libretrodb.sqlite libretrodb.sqlite
-    dart run build_runner build
+
+build-dart:
+    cd dart; dart run build_runner build
 
 submodules:
     git submodule update --init --remote

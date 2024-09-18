@@ -7,7 +7,7 @@ import 'models.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart' as path;
 
-export "./models.dart";
+export "models.dart";
 
 class RetroDatabase {
   final Database db;
