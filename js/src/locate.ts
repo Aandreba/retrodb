@@ -6,7 +6,7 @@ const IN_NODE =
 export const RETRODB_URL = locateFile();
 
 async function locateFile() {
-    const url = new URL("../libretrodb.sqlite", import.meta.url);
+    const url = new URL("../../libretrodb.sqlite", import.meta.url);
     if (url.protocol === "file:") {
         return IN_NODE
             ? (await import("url")).fileURLToPath(url)
