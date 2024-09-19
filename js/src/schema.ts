@@ -67,7 +67,8 @@ export const manufacturers = sqliteTable("manufacturers", {
 });
 
 /* RELATIONS */
-export const gamesRelations = relations(games, ({ one }) => ({
+export const gamesRelations = relations(games, ({ one, many }) => ({
+    roms: many(roms),
     developer: one(developers, {
         fields: [games.developerId],
         references: [developers.id],
@@ -95,6 +96,13 @@ export const gamesRelations = relations(games, ({ one }) => ({
     platform: one(platforms, {
         fields: [games.platformId],
         references: [platforms.id],
+    }),
+}));
+
+export const romsRelations = relations(roms, ({ one }) => ({
+    game: one(games, {
+        fields: [roms.serialId],
+        references: [games.serialId],
     }),
 }));
 
