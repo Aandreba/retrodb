@@ -1,3 +1,4 @@
+export { RETRODB_URL } from "./locate";
 export * as schema from "./schema";
 export * from "./schema";
 
