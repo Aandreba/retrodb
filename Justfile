@@ -4,6 +4,7 @@ set windows-powershell := true
 build-db: submodules
     cd libretrodb-sqlite; make all
     cp libretrodb-sqlite/build/libretrodb.sqlite libretrodb.sqlite
+    cp libretrodb.sqlite dart/libretrodb.sqlite
     cd js/example; ln -s ../../libretrodb.sqlite libretrodb.sqlite
 
 build-dart:
