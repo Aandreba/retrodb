@@ -1,0 +1,12 @@
+[package]
+name = "retrodb"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+rusqlite = { version = "0.32.1", features = ["bundled"] }
+serde = { version = "1.0.210", features = ["derive"], optional = true }
+utils-atomics = "1.1.2"
+
+[features]
+serde = ["dep:serde"]
