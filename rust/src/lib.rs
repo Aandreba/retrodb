@@ -1,54 +1,103 @@
-use ouroboros::self_referencing;
+use models::{parse_col, Game, Rom};
 use query::{Column, Query};
-use rusqlite::{OpenFlags, PrepFlags, Statement};
-use std::{
-    fmt::Write,
-    path::Path,
-    sync::{Condvar, Mutex},
-};
+use rusqlite::{OpenFlags, Params, PrepFlags};
+use std::{fmt::Write, path::Path};
 
 pub mod models;
 pub mod query;
 
-pub struct Pool {
-    cond: Condvar,
-    conns: Box<[Mutex<Connection>]>,
+#[derive(Debug)]
+pub struct Connection {
+    conn: rusqlite::Connection,
 }
 
-impl Pool {
-    pub fn new(path: impl AsRef<Path>, size: usize) -> Result<Self, rusqlite::Error> {
-        let conns = (0..size)
-            .map(|_| {
-                let conn = rusqlite::Connection::open_with_flags(
-                    path.as_ref(),
-                    OpenFlags::SQLITE_OPEN_READ_ONLY | OpenFlags::SQLITE_OPEN_NO_MUTEX,
-                )?;
-                Ok(Mutex::new(Connection::new(conn, |_| Vec::new())))
-            })
-            .collect::<Result<Box<[_]>, rusqlite::Error>>()?;
-
-        return Ok(Self {
-            cond: Condvar::new(),
-            conns,
-        });
+impl Connection {
+    pub fn open(path: impl AsRef<Path>) -> Result<Self, rusqlite::Error> {
+        Ok(Self {
+            conn: rusqlite::Connection::open_with_flags(
+                path,
+                OpenFlags::SQLITE_OPEN_NO_MUTEX | OpenFlags::SQLITE_OPEN_READ_ONLY,
+            )?,
+        })
     }
 
     pub fn prepare<C: IntoIterator<Item = Column>>(
-        &mut self,
+        &self,
         query: Query<C>,
         flags: PrepFlags,
     ) -> Result<Statement<'_>, rusqlite::Error> {
         let sql = build_sql(query);
-        return self.conn.prepare_with_flags(&sql, flags);
+        let stmt = self.conn.prepare_with_flags(&sql, flags)?;
+        return Ok(Statement { stmt });
     }
 }
 
-#[self_referencing]
-struct Connection {
-    conn: rusqlite::Connection,
-    #[borrows(conn)]
-    #[covariant]
-    stmts: Vec<Statement<'this>>,
+#[derive(Debug)]
+pub struct Statement<'a> {
+    stmt: rusqlite::Statement<'a>,
+}
+
+impl<'a> Statement<'a> {
+    pub fn query<S: for<'b> From<&'b str>>(
+        &mut self,
+        params: impl Params,
+    ) -> Result<Rows<S>, rusqlite::Error> {
+        Ok(Rows {
+            prev: None,
+            iter: self.stmt.query(params)?,
+        })
+    }
+}
+
+pub struct Rows<'a, S> {
+    prev: Option<Game<S>>,
+    iter: rusqlite::Rows<'a>,
+}
+
+impl<'a, S: for<'b> From<&'b str>> Iterator for Rows<'a, S> {
+    type Item = Result<Game<S>, rusqlite::Error>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        macro_rules! tri {
+            ($e:expr) => {
+                match $e {
+                    Ok(x) => x,
+                    Err(e) => return Some(Err(e)),
+                }
+            };
+        }
+
+        let mut game = match self.prev.take() {
+            Some(prev) => prev,
+            None => {
+                let row = match self.iter.next().transpose()? {
+                    Ok(row) => row,
+                    Err(e) => return Some(Err(e)),
+                };
+
+                let id = unsafe { tri!(parse_col::<u32>(row, "id")).unwrap_unchecked() };
+                let mut game = tri!(Game::<S>::parse(&row, id));
+                game.roms.extend(tri!(Rom::<S>::parse(&row)));
+                game
+            }
+        };
+
+        while let Some(row) = tri!(self.iter.next()) {
+            let id = unsafe { tri!(parse_col::<u32>(row, "id")).unwrap_unchecked() };
+            let rom = tri!(Rom::<S>::parse(&row));
+
+            if id != game.id {
+                let mut curr = tri!(Game::<S>::parse(row, id));
+                curr.roms.extend(rom);
+                self.prev = Some(curr);
+                break;
+            } else {
+                game.roms.extend(rom);
+            }
+        }
+
+        return Some(Ok(game));
+    }
 }
 
 fn build_sql<C: IntoIterator<Item = Column>>(
@@ -66,7 +115,10 @@ fn build_sql<C: IntoIterator<Item = Column>>(
 
     let fields = fields.join(",");
     let joins = joins.join(",");
-    let mut res = format!("SELECT {fields} FROM games {joins} WHERE {}", r#where);
+    let mut res = format!(
+        "SELECT {fields} FROM games {joins} WHERE {} ORDER BY games.id",
+        r#where
+    );
 
     if let Some(limit) = limit {
         res.push_str(" LIMIT ");

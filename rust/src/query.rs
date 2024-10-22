@@ -97,7 +97,6 @@ impl Column {
                 joins.push("INNER JOIN roms ON games.serial_id = roms.serial_id");
                 return fields.extend([
                     "roms.id as rom_id",
-                    "roms.serial_id as rom_serial_id",
                     "roms.name as rom_name",
                     "roms.crc as rom_crc",
                 ]);
