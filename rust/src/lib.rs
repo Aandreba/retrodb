@@ -3,6 +3,7 @@ use query::{Column, Query};
 use rusqlite::{OpenFlags, Params, PrepFlags};
 use std::{fmt::Write, path::Path};
 
+pub extern crate rusqlite;
 pub mod models;
 pub mod query;
 
