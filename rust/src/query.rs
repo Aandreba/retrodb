@@ -1,3 +1,5 @@
+use strum_macros::EnumIter;
+
 #[derive(Debug)]
 pub struct Query<'a, C> {
     pub cols: C,
@@ -35,7 +37,7 @@ impl<'a, C: IntoIterator<Item = Column>> Query<'a, C> {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, EnumIter)]
 pub enum Column {
     SerialId,
     Developer,

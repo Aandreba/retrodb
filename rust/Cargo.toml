@@ -6,6 +6,8 @@ edition = "2021"
 [dependencies]
 rusqlite = { version = "0.32.1", features = ["bundled"] }
 serde = { version = "1.0.210", features = ["derive"], optional = true }
+strum = "0.26.3"
+strum_macros = "0.26.4"
 utils-atomics = "1.1.2"
 
 [features]
