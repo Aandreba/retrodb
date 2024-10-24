@@ -28,7 +28,6 @@ impl Connection {
         flags: PrepFlags,
     ) -> Result<Statement<'_>, rusqlite::Error> {
         let sql = build_sql(query);
-        println!("{sql}");
         let stmt = self.conn.prepare_with_flags(&sql, flags)?;
         return Ok(Statement { stmt });
     }
@@ -116,7 +115,7 @@ fn build_sql<C: IntoIterator<Item = Column>>(
         .for_each(|col| col.transform(&mut fields, &mut joins));
 
     let fields = fields.join(",");
-    let joins = joins.join(",");
+    let joins = joins.join(" ");
     let mut res = format!(
         "SELECT {fields} FROM games {joins} WHERE {} ORDER BY games.id",
         r#where
