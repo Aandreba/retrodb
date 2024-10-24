@@ -28,6 +28,7 @@ impl Connection {
         flags: PrepFlags,
     ) -> Result<Statement<'_>, rusqlite::Error> {
         let sql = build_sql(query);
+        println!("{sql}");
         let stmt = self.conn.prepare_with_flags(&sql, flags)?;
         return Ok(Statement { stmt });
     }
